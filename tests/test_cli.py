@@ -51,8 +51,9 @@ def test_cli_fails_for_missing_file(tmp_path: Path) -> None:
         [str(missing_file), "--read", "postgres", "--write", "snowflake"],
     )
 
-    assert result.exit_code == 1
-    assert f"Input file does not exist: {missing_file}" in result.output
+    assert result.exit_code == 2
+    assert "Invalid value for 'INPUT_PATH':" in result.output
+    assert "does not exist" in result.output
 
 
 def test_cli_fails_for_non_sql_file(tmp_path: Path) -> None:
@@ -64,8 +65,8 @@ def test_cli_fails_for_non_sql_file(tmp_path: Path) -> None:
         [str(input_file), "--read", "postgres", "--write", "snowflake"],
     )
 
-    assert result.exit_code == 1
-    assert f"Input file must have a .sql extension: {input_file}" in result.output
+    assert result.exit_code == 2
+    assert "Invalid value for 'INPUT_PATH': Path must point to a .sql file." in result.output
 
 
 def test_cli_fails_when_transpile_raises(monkeypatch, tmp_path: Path) -> None:

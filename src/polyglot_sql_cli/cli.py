@@ -7,9 +7,10 @@ from polyglot_sql import transpile
 app = typer.Typer(add_completion=False)
 
 
-def _fail(message: str) -> None:
-    typer.echo(message, err=True)
-    raise typer.Exit(code=1)
+def _validate_sql_file(path: Path) -> Path:
+    if path.suffix.lower() != ".sql":
+        raise typer.BadParameter("Path must point to a .sql file.")
+    return path
 
 
 def _serialize_statements(statements: list[str]) -> str:
@@ -21,7 +22,18 @@ def _serialize_statements(statements: list[str]) -> str:
 
 @app.command()
 def cli(
-    input_path: Annotated[Path, typer.Argument(help="Path to a single .sql file.")],
+    input_path: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to a single .sql file.",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            writable=True,
+            resolve_path=True,
+            callback=_validate_sql_file,
+        ),
+    ],
     read: Annotated[str, typer.Option("--read", "-r", help="Source SQL dialect.")],
     write: Annotated[str, typer.Option("--write", "-w", help="Target SQL dialect.")],
     pretty: Annotated[
@@ -32,23 +44,18 @@ def cli(
         ),
     ] = False,
 ) -> None:
-    if not input_path.exists():
-        _fail(f"Input file does not exist: {input_path}")
-    if not input_path.is_file():
-        _fail(f"Input path is not a file: {input_path}")
-    if input_path.suffix.lower() != ".sql":
-        _fail(f"Input file must have a .sql extension: {input_path}")
-
     sql = input_path.read_text(encoding="utf-8")
 
     try:
         statements = transpile(sql, read=read, write=write, pretty=pretty)
     except Exception as exc:
-        _fail(f"Transpile failed ({read} -> {write}): {exc}")
+        typer.echo(f"Transpile failed ({read} -> {write}): {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
     output_sql = _serialize_statements(statements)
     if not output_sql:
-        _fail("Transpile produced empty output.")
+        typer.echo("Transpile produced empty output.", err=True)
+        raise typer.Exit(code=1)
 
     input_path.write_text(output_sql, encoding="utf-8")
 
