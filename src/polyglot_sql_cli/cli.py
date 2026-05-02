@@ -6,20 +6,6 @@ from polyglot_sql import transpile
 
 app = typer.Typer()
 
-
-def _validate_sql_file(path: Path) -> Path:
-    if path.suffix.lower() != ".sql":
-        raise typer.BadParameter("Path must point to a .sql file.")
-    return path
-
-
-def _serialize_statements(statements: list[str]) -> str:
-    cleaned = [statement.rstrip().rstrip(";") for statement in statements if statement.strip()]
-    if not cleaned:
-        return ""
-    return ";\n".join(cleaned) + ";\n"
-
-
 @app.command()
 def cli(
     input_path: Annotated[
@@ -31,7 +17,6 @@ def cli(
             readable=True,
             writable=True,
             resolve_path=True,
-            callback=_validate_sql_file,
         ),
     ],
     read: Annotated[str, typer.Option("--read", "-r", help="Source SQL dialect.")],
@@ -45,18 +30,8 @@ def cli(
     ] = False,
 ) -> None:
     sql = input_path.read_text(encoding="utf-8")
-
-    try:
-        statements = transpile(sql, read=read, write=write, pretty=pretty)
-    except Exception as exc:
-        typer.echo(f"Transpile failed ({read} -> {write}): {exc}", err=True)
-        raise typer.Exit(code=1) from exc
-
-    output_sql = _serialize_statements(statements)
-    if not output_sql:
-        typer.echo("Transpile produced empty output.", err=True)
-        raise typer.Exit(code=1)
-
+    statements = transpile(sql, read=read, write=write, pretty=pretty)
+    output_sql = ";\n".join(statements)
     input_path.write_text(output_sql, encoding="utf-8")
 
 
