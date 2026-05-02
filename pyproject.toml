@@ -7,7 +7,9 @@ authors = [
     { name = "botan", email = "aginbotan@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "typer>=0.25.1",
+]
 
 [project.scripts]
 polyglot-sql-cli = "polyglot_sql_cli:main"
