@@ -11,6 +11,13 @@ def _fail(message: str) -> None:
     raise typer.Exit(code=1)
 
 
+def _serialize_statements(statements: list[str]) -> str:
+    cleaned = [statement.rstrip().rstrip(";") for statement in statements if statement.strip()]
+    if not cleaned:
+        return ""
+    return ";\n".join(cleaned) + ";\n"
+
+
 @app.command()
 def cli(
     input_path: Path = typer.Argument(..., help="Path to a single .sql file."),
@@ -36,10 +43,11 @@ def cli(
     except Exception as exc:
         _fail(f"Transpile failed ({read} -> {write}): {exc}")
 
-    if not result or not result.strip():
+    output_sql = _serialize_statements(result)
+    if not output_sql:
         _fail("Transpile produced empty output.")
 
-    input_path.write_text(result, encoding="utf-8")
+    input_path.write_text(output_sql, encoding="utf-8")
 
 
 def main() -> None:
