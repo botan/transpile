@@ -4,7 +4,7 @@ from typing import Annotated
 import typer
 from polyglot_sql import transpile
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer()
 
 
 def _validate_sql_file(path: Path) -> Path:
