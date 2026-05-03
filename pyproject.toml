@@ -19,12 +19,6 @@ transpile = "transpile.cli:main"
 requires = ["uv_build>=0.11.8,<0.12.0"]
 build-backend = "uv_build"
 
-[tool.ruff]
-line-length = 100
-target-version = "py313"
-
-[tool.ty]
-
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
