@@ -124,7 +124,6 @@ def cli(
     dialects: Annotated[
         bool,
         typer.Option(
-            "--dialects",
             help="Print all acceptable SQL dialect names and exit.",
             callback=_show_dialects_and_exit,
             is_eager=True,
@@ -171,6 +170,7 @@ def cli(
     )
 
     raise typer.Exit(code=int(stats.failed > 0))
+
 
 def main() -> None:
     app()
