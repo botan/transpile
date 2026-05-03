@@ -74,42 +74,6 @@ def test_cli_transpiles_directory_recursively(monkeypatch, tmp_path: Path) -> No
     assert "Summary: scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
 
 
-def test_cli_no_recursive_only_processes_top_level(monkeypatch, tmp_path: Path) -> None:
-    root = tmp_path / "sql"
-    nested = root / "nested"
-    root.mkdir()
-    nested.mkdir()
-
-    top_file = root / "a.sql"
-    nested_file = nested / "b.sql"
-
-    top_file.write_text("select 1", encoding="utf-8")
-    nested_file.write_text("select 2", encoding="utf-8")
-
-    monkeypatch.setattr(
-        cli_module,
-        "transpile",
-        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
-    )
-
-    result = runner.invoke(
-        cli_module.app,
-        [
-            str(root),
-            "--read",
-            "postgres",
-            "--write",
-            "snowflake",
-            "--no-recursive",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert top_file.read_text(encoding="utf-8") == "SELECT 1"
-    assert nested_file.read_text(encoding="utf-8") == "select 2"
-    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
-
-
 def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     root = tmp_path / "sql"
     root.mkdir()
@@ -146,28 +110,6 @@ def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     assert excluded.read_text(encoding="utf-8") == "select 2"
     assert included.read_text(encoding="utf-8") == "SELECT 3"
     assert "Summary: scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
-
-
-def test_cli_check_mode_does_not_write_and_returns_two_on_changes(
-    monkeypatch, tmp_path: Path
-) -> None:
-    target = tmp_path / "query.sql"
-    target.write_text("select 1", encoding="utf-8")
-
-    monkeypatch.setattr(
-        cli_module,
-        "transpile",
-        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
-    )
-
-    result = runner.invoke(
-        cli_module.app,
-        [str(target), "--read", "postgres", "--write", "snowflake", "--check"],
-    )
-
-    assert result.exit_code == 2
-    assert target.read_text(encoding="utf-8") == "select 1"
-    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
 
 
 def test_cli_diff_prints_patch(monkeypatch, tmp_path: Path) -> None:
@@ -234,3 +176,42 @@ def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
 
     assert result.exit_code == 2
     assert "Invalid value for 'TARGET':" in result.output
+
+
+def test_cli_exclude_simple_name_matches_nested_paths(
+    monkeypatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "sql"
+    nested = root / "nested"
+    root.mkdir()
+    nested.mkdir()
+
+    keep = root / "keep.sql"
+    excluded_nested = nested / "skip.sql"
+
+    keep.write_text("select 1", encoding="utf-8")
+    excluded_nested.write_text("select 2", encoding="utf-8")
+
+    monkeypatch.setattr(
+        cli_module,
+        "transpile",
+        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
+    )
+
+    result = runner.invoke(
+        cli_module.app,
+        [
+            str(root),
+            "--read",
+            "postgres",
+            "--write",
+            "snowflake",
+            "--exclude",
+            "skip.sql",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert keep.read_text(encoding="utf-8") == "SELECT 1"
+    assert excluded_nested.read_text(encoding="utf-8") == "select 2"
+    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout

@@ -11,7 +11,7 @@ uv run transpile path/to/sql-or-dir --read postgres --write snowflake
 ## Behavior
 
 - `TARGET` can be a single file or a directory.
-- Directories are walked recursively by default.
+- Directories are walked recursively.
 - Only `*.sql` files are processed by default.
 - The command keeps running if individual files fail and prints a final summary.
 
@@ -20,14 +20,11 @@ uv run transpile path/to/sql-or-dir --read postgres --write snowflake
 - `--read`: source SQL dialect (required)
 - `--write`: target SQL dialect (required)
 - `--pretty` / `--no-pretty`: format transpiled SQL output
-- `--recursive` / `--no-recursive`: recursive directory walk (default: recursive)
 - `--include`: include glob(s), repeatable (default: `*.sql`)
 - `--exclude`: exclude glob(s), repeatable
-- `--check`: no-write mode; exits non-zero when files would change
 - `--diff`: print unified diffs for changed files
 
 ## Exit Codes
 
 - `0`: success
 - `1`: at least one file failed to transpile
-- `2`: `--check` mode found files that would change

@@ -39,7 +39,14 @@ def _normalize_patterns(patterns: list[str] | None) -> tuple[str, ...]:
 
 
 def _matches(path: str, patterns: tuple[str, ...]) -> bool:
-    return any(fnmatch(path, pattern) for pattern in patterns)
+    basename = path.rsplit("/", 1)[-1]
+    for pattern in patterns:
+        if fnmatch(path, pattern):
+            return True
+        # Treat simple filename patterns as depth-agnostic for better ergonomics.
+        if "/" not in pattern and fnmatch(basename, pattern):
+            return True
+    return False
 
 
 def _should_process(
@@ -58,7 +65,6 @@ def _should_process(
 def _candidate_files(
     target: Path,
     *,
-    recursive: bool,
     include_patterns: tuple[str, ...],
     exclude_patterns: tuple[str, ...],
 ) -> list[Path]:
@@ -67,24 +73,11 @@ def _candidate_files(
 
     files: list[Path] = []
 
-    if recursive:
-        walker = target.walk(top_down=True)
-        for root, dirnames, filenames in walker:
-            dirnames[:] = [dirname for dirname in dirnames if dirname not in DEFAULT_SKIP_DIRS]
-            for filename in filenames:
-                path = root / filename
-                rel = path.relative_to(target).as_posix()
-                if not _should_process(
-                    rel,
-                    include_patterns=include_patterns,
-                    exclude_patterns=exclude_patterns,
-                ):
-                    continue
-                files.append(path)
-    else:
-        for path in target.iterdir():
-            if not path.is_file():
-                continue
+    walker = target.walk(top_down=True)
+    for root, dirnames, filenames in walker:
+        dirnames[:] = [dirname for dirname in dirnames if dirname not in DEFAULT_SKIP_DIRS]
+        for filename in filenames:
+            path = root / filename
             rel = path.relative_to(target).as_posix()
             if not _should_process(
                 rel,
@@ -138,10 +131,6 @@ def cli(
         bool,
         typer.Option(help="Pretty format transpiled SQL output."),
     ] = False,
-    recursive: Annotated[
-        bool,
-        typer.Option(help="Walk directories recursively."),
-    ] = True,
     include: Annotated[
         list[str] | None,
         typer.Option(
@@ -154,12 +143,6 @@ def cli(
             help="Glob(s) to exclude. Repeat option for multiple patterns.",
         ),
     ] = None,
-    check: Annotated[
-        bool,
-        typer.Option(
-            help="Do not write changes; fail if any file would change.",
-        ),
-    ] = False,
     diff: Annotated[
         bool,
         typer.Option(help="Print unified diff for changed files."),
@@ -169,7 +152,6 @@ def cli(
     exclude_patterns = tuple(exclude or ())
     files = _candidate_files(
         target,
-        recursive=recursive,
         include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
     )
@@ -200,8 +182,7 @@ def cli(
         if diff:
             _print_diff(path, source, output)
 
-        if not check:
-            path.write_text(output, encoding="utf-8")
+        path.write_text(output, encoding="utf-8")
 
     typer.echo(
         (
@@ -212,9 +193,6 @@ def cli(
 
     if stats.failed > 0:
         raise typer.Exit(code=1)
-
-    if check and stats.changed > 0:
-        raise typer.Exit(code=2)
 
     raise typer.Exit(code=0)
 
