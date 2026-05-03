@@ -7,10 +7,10 @@ import transpile.cli as cli_module
 runner = CliRunner()
 
 
-def test_cli_dialects_subcommand_prints_acceptable_dialects(monkeypatch) -> None:
+def test_cli_dialects_option_prints_acceptable_dialects(monkeypatch) -> None:
     monkeypatch.setattr(cli_module, "available_dialects", lambda: ["snowflake", "postgres"])
 
-    result = runner.invoke(cli_module.app, ["dialects"])
+    result = runner.invoke(cli_module.app, ["--dialects"])
 
     assert result.exit_code == 0
     assert result.stdout == "postgres\nsnowflake\n"
@@ -37,31 +37,12 @@ def test_cli_transpiles_single_file_in_place(monkeypatch, tmp_path: Path) -> Non
 
     result = runner.invoke(
         cli_module.app,
-        ["run", str(target), "--read", "postgres", "--write", "snowflake", "--pretty"],
+        [str(target), "--read", "postgres", "--write", "snowflake", "--pretty"],
     )
 
     assert result.exit_code == 0
     assert target.read_text(encoding="utf-8") == "SELECT 1"
     assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
-
-
-def test_cli_run_subcommand_transpiles_single_file(monkeypatch, tmp_path: Path) -> None:
-    target = tmp_path / "query.sql"
-    target.write_text("select 1", encoding="utf-8")
-
-    monkeypatch.setattr(
-        cli_module,
-        "transpile",
-        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
-    )
-
-    result = runner.invoke(
-        cli_module.app,
-        ["run", str(target), "--read", "postgres", "--write", "snowflake"],
-    )
-
-    assert result.exit_code == 0
-    assert target.read_text(encoding="utf-8") == "SELECT 1"
 
 
 def test_cli_transpiles_directory_recursively(monkeypatch, tmp_path: Path) -> None:
@@ -92,7 +73,7 @@ def test_cli_transpiles_directory_recursively(monkeypatch, tmp_path: Path) -> No
 
     result = runner.invoke(
         cli_module.app,
-        ["run", str(root), "--read", "postgres", "--write", "snowflake"],
+        [str(root), "--read", "postgres", "--write", "snowflake"],
     )
 
     assert result.exit_code == 0
@@ -123,7 +104,6 @@ def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     result = runner.invoke(
         cli_module.app,
         [
-            "run",
             str(root),
             "--read",
             "postgres",
@@ -153,7 +133,7 @@ def test_cli_diff_prints_patch(monkeypatch, tmp_path: Path) -> None:
 
     result = runner.invoke(
         cli_module.app,
-        ["run", str(target), "--read", "postgres", "--write", "snowflake", "--diff"],
+        [str(target), "--read", "postgres", "--write", "snowflake", "--diff"],
     )
 
     assert result.exit_code == 0
@@ -186,7 +166,7 @@ def test_cli_continues_on_errors_and_returns_one(monkeypatch, tmp_path: Path) ->
 
     result = runner.invoke(
         cli_module.app,
-        ["run", str(tmp_path), "--read", "postgres", "--write", "snowflake"],
+        [str(tmp_path), "--read", "postgres", "--write", "snowflake"],
     )
 
     assert result.exit_code == 1
@@ -200,7 +180,7 @@ def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
 
     result = runner.invoke(
         cli_module.app,
-        ["run", str(missing_path), "--read", "postgres", "--write", "snowflake"],
+        [str(missing_path), "--read", "postgres", "--write", "snowflake"],
     )
 
     assert result.exit_code == 2
@@ -230,7 +210,6 @@ def test_cli_exclude_simple_name_matches_nested_paths(
     result = runner.invoke(
         cli_module.app,
         [
-            "run",
             str(root),
             "--read",
             "postgres",

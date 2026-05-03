@@ -5,16 +5,15 @@ Transpile SQL files in place, from a file path or an entire directory tree.
 ## Usage
 
 ```bash
-uv run transpile run path/to/sql-or-dir --read postgres --write snowflake
+uv run transpile path/to/sql-or-dir --read postgres --write snowflake
 ```
 ```bash
-uv run transpile dialects
+uv run transpile --dialects
 ```
 
 ## Behavior
 
 - `TARGET` can be a single file or a directory.
-- `run` is the transpile subcommand.
 - Directories are walked recursively.
 - Only `*.sql` files are processed by default.
 - The command keeps running if individual files fail and prints a final summary.
@@ -26,11 +25,7 @@ uv run transpile dialects
 - `--pretty` / `--no-pretty`: format transpiled SQL output
 - `--exclude`: exclude glob(s), repeatable
 - `--diff`: print unified diffs for changed files
-
-## Subcommands
-
-- `run`: transpile files/directories in place
-- `dialects`: print all acceptable SQL dialect names
+- `--dialects`: print all acceptable SQL dialect names and exit
 
 ## Exit Codes
 

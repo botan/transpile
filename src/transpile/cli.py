@@ -81,7 +81,14 @@ def _acceptable_dialects() -> tuple[str, ...]:
     return tuple(sorted(available_dialects()))
 
 
-@app.command(name="run")
+def _show_dialects_and_exit(value: bool) -> bool:
+    if value:
+        typer.echo("\n".join(_acceptable_dialects()))
+        raise typer.Exit(code=0)
+    return value
+
+
+@app.command()
 def cli(
     target: Annotated[
         Path,
@@ -114,7 +121,17 @@ def cli(
         bool,
         typer.Option(help="Print unified diff for changed files."),
     ] = False,
+    dialects: Annotated[
+        bool,
+        typer.Option(
+            "--dialects",
+            help="Print all acceptable SQL dialect names and exit.",
+            callback=_show_dialects_and_exit,
+            is_eager=True,
+        ),
+    ] = False,
 ) -> None:
+    del dialects
     exclude_patterns = tuple(exclude or ())
     files = _candidate_files(target, exclude_patterns=exclude_patterns)
 
@@ -154,12 +171,6 @@ def cli(
     )
 
     raise typer.Exit(code=int(stats.failed > 0))
-
-
-@app.command()
-def dialects() -> None:
-    typer.echo("\n".join(_acceptable_dialects()))
-
 
 def main() -> None:
     app()
