@@ -49,7 +49,7 @@ def _candidate_files(
 
     files = [
         path
-        for root, _dirnames, filenames in target.walk(top_down=True)
+        for root, _, filenames in target.walk(top_down=True)
         for filename in filenames
         if _should_process(
             (path := root / filename).relative_to(target).as_posix(),
