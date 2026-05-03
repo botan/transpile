@@ -239,11 +239,11 @@ def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
     assert "Invalid value for 'TARGET':" in result.output
 
 
-def test_cli_processes_engine_transpile_sql_fixture_directory(
+def test_cli_processes_transpile_fixture_directory(
     monkeypatch, tmp_path: Path
 ) -> None:
-    fixture_source = Path(__file__).parent / "fixtures" / "engine_transpile_sql"
-    fixture_target = tmp_path / "engine_transpile_sql"
+    fixture_source = Path(__file__).parent / "fixtures" / "transpile_cases"
+    fixture_target = tmp_path / "transpile_cases"
     shutil.copytree(fixture_source, fixture_target)
     sql_files = sorted(fixture_target.glob("*.sql"))
     expected_scanned = len(sql_files)
