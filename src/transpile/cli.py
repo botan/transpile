@@ -2,8 +2,10 @@ from dataclasses import dataclass
 from difflib import unified_diff
 from fnmatch import fnmatch
 from pathlib import Path
+import sys
 from typing import Annotated
 
+from rich.progress import track
 import typer
 from polyglot_sql import dialects as available_dialects
 from polyglot_sql import transpile
@@ -138,7 +140,12 @@ def cli(
         typer.echo("info: no matching files found")
         raise typer.Exit(code=0)
 
-    for path in files:
+    for path in track(
+        files,
+        description="Transpiling",
+        transient=True,
+        disable=len(files) <= 1 or not sys.stderr.isatty(),
+    ):
         try:
             source = path.read_text(encoding="utf-8")
             output = _transpile_content(source, read=read, write=write, pretty=pretty)
