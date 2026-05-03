@@ -112,19 +112,17 @@ def test_cli_no_recursive_only_processes_top_level(monkeypatch, tmp_path: Path) 
     assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
 
 
-def test_cli_respects_exclude_and_polyglotignore(monkeypatch, tmp_path: Path) -> None:
+def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     root = tmp_path / "sql"
     root.mkdir()
 
     keep = root / "keep.sql"
     excluded = root / "skip.sql"
-    ignored = root / "ignore_me.sql"
-    ignore_file = root / ".polyglotignore"
+    included = root / "include_me.sql"
 
     keep.write_text("select 1", encoding="utf-8")
     excluded.write_text("select 2", encoding="utf-8")
-    ignored.write_text("select 3", encoding="utf-8")
-    ignore_file.write_text("ignore_me.sql\n", encoding="utf-8")
+    included.write_text("select 3", encoding="utf-8")
 
     monkeypatch.setattr(
         cli_module,
@@ -148,8 +146,8 @@ def test_cli_respects_exclude_and_polyglotignore(monkeypatch, tmp_path: Path) ->
     assert result.exit_code == 0
     assert keep.read_text(encoding="utf-8") == "SELECT 1"
     assert excluded.read_text(encoding="utf-8") == "select 2"
-    assert ignored.read_text(encoding="utf-8") == "select 3"
-    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
+    assert included.read_text(encoding="utf-8") == "SELECT 3"
+    assert "Summary: scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
 
 
 def test_cli_check_mode_does_not_write_and_returns_two_on_changes(

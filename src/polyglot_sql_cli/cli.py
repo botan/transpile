@@ -38,20 +38,6 @@ def _normalize_patterns(patterns: list[str] | None) -> tuple[str, ...]:
     return cleaned or DEFAULT_INCLUDE_PATTERNS
 
 
-def _load_ignore_patterns(target: Path, ignore_file: Path | None) -> tuple[str, ...]:
-    if ignore_file is None:
-        base_dir = target if target.is_dir() else target.parent
-        ignore_file = base_dir / ".polyglotignore"
-
-    if not ignore_file.exists():
-        return ()
-
-    lines = ignore_file.read_text(encoding="utf-8").splitlines()
-    return tuple(
-        line.strip() for line in lines if line.strip() and not line.strip().startswith("#")
-    )
-
-
 def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     return any(fnmatch(path, pattern) for pattern in patterns)
 
@@ -62,7 +48,6 @@ def _candidate_files(
     recursive: bool,
     include_patterns: tuple[str, ...],
     exclude_patterns: tuple[str, ...],
-    ignore_patterns: tuple[str, ...],
 ) -> list[Path]:
     if target.is_file():
         return [target]
@@ -80,8 +65,6 @@ def _candidate_files(
                     continue
                 if exclude_patterns and _matches(rel, exclude_patterns):
                     continue
-                if ignore_patterns and _matches(rel, ignore_patterns):
-                    continue
                 files.append(path)
     else:
         for path in target.iterdir():
@@ -91,8 +74,6 @@ def _candidate_files(
             if not _matches(rel, include_patterns):
                 continue
             if exclude_patterns and _matches(rel, exclude_patterns):
-                continue
-            if ignore_patterns and _matches(rel, ignore_patterns):
                 continue
             files.append(path)
 
@@ -158,18 +139,6 @@ def cli(
             help="Glob(s) to exclude. Repeat option for multiple patterns.",
         ),
     ] = None,
-    ignore_file: Annotated[
-        Path | None,
-        typer.Option(
-            "--ignore-file",
-            help="Path to ignore file (default: .polyglotignore beside target).",
-            exists=True,
-            file_okay=True,
-            dir_okay=False,
-            readable=True,
-            resolve_path=True,
-        ),
-    ] = None,
     check: Annotated[
         bool,
         typer.Option(
@@ -184,13 +153,11 @@ def cli(
 ) -> None:
     include_patterns = _normalize_patterns(include)
     exclude_patterns = tuple(exclude or ())
-    ignore_patterns = _load_ignore_patterns(target, ignore_file)
     files = _candidate_files(
         target,
         recursive=recursive,
         include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
-        ignore_patterns=ignore_patterns,
     )
 
     stats = RunStats(scanned=len(files))

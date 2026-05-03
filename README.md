@@ -23,7 +23,6 @@ uv run polyglot path/to/sql-or-dir --read postgres --write snowflake
 - `--recursive` / `--no-recursive`: recursive directory walk (default: recursive)
 - `--include`: include glob(s), repeatable (default: `*.sql`)
 - `--exclude`: exclude glob(s), repeatable
-- `--ignore-file`: ignore file path (default: `.polyglotignore` next to target)
 - `--check`: no-write mode; exits non-zero when files would change
 - `--diff`: print unified diffs for changed files
 
