@@ -239,12 +239,19 @@ def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
     assert "Invalid value for 'TARGET':" in result.output
 
 
-def test_cli_processes_engine_inline_sql_fixture_directory(
+def test_cli_processes_engine_transpile_sql_fixture_directory(
     monkeypatch, tmp_path: Path
 ) -> None:
-    fixture_source = Path(__file__).parent / "fixtures" / "engine_inline_sql"
-    fixture_target = tmp_path / "engine_inline_sql"
+    fixture_source = Path(__file__).parent / "fixtures" / "engine_transpile_sql"
+    fixture_target = tmp_path / "engine_transpile_sql"
     shutil.copytree(fixture_source, fixture_target)
+    sql_files = sorted(fixture_target.glob("*.sql"))
+    expected_scanned = len(sql_files)
+    expected_changed = sum(
+        path.read_text(encoding="utf-8") != path.read_text(encoding="utf-8").upper()
+        for path in sql_files
+    )
+    expected_unchanged = expected_scanned - expected_changed
 
     monkeypatch.setattr(
         cli_module,
@@ -258,4 +265,7 @@ def test_cli_processes_engine_inline_sql_fixture_directory(
     )
 
     assert result.exit_code == 0
-    assert "Summary: scanned=4 changed=2 unchanged=2 failed=0" in result.stdout
+    assert (
+        f"Summary: scanned={expected_scanned} "
+        f"changed={expected_changed} unchanged={expected_unchanged} failed=0"
+    ) in result.stdout
