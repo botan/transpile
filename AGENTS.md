@@ -14,5 +14,11 @@ If your environment blocks the default `uv` cache path, set a local cache (examp
 - Prefer small, focused helpers; internal helpers use a leading underscore (for example, `_candidate_files`).
 - Run `ruff` and `ty` before making a commit or opening a PR.
 
+## Change Scope Policy
+- Default to surgical, minimal diffs that directly solve the requested task.
+- Do not add new dependencies, helpers, docs updates, or broad refactors unless required for correctness or explicitly requested.
+- Keep tests targeted: add or change tests only when needed to cover changed behavior or prevent regressions from that exact change.
+- Preserve existing behavior and output unless the request explicitly asks for behavior changes.
+
 ## Commit
 - `wt step comit` to create commits with a guided prompt.
