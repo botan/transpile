@@ -22,13 +22,12 @@ class RunStats:
 
 def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     basename = path.rsplit("/", 1)[-1]
-    for pattern in patterns:
-        if fnmatch(path, pattern):
-            return True
+    return any(
+        fnmatch(path, pattern)
         # Treat simple filename patterns as depth-agnostic for better ergonomics.
-        if "/" not in pattern and fnmatch(basename, pattern):
-            return True
-    return False
+        or ("/" not in pattern and fnmatch(basename, pattern))
+        for pattern in patterns
+    )
 
 
 def _should_process(
@@ -36,11 +35,9 @@ def _should_process(
     *,
     exclude_patterns: tuple[str, ...],
 ) -> bool:
-    if not _matches(relative_path, ("*.sql",)):
-        return False
-    if exclude_patterns and _matches(relative_path, exclude_patterns):
-        return False
-    return True
+    return _matches(relative_path, ("*.sql",)) and not (
+        exclude_patterns and _matches(relative_path, exclude_patterns)
+    )
 
 
 def _candidate_files(
@@ -51,38 +48,31 @@ def _candidate_files(
     if target.is_file():
         return [target]
 
-    files: list[Path] = []
-
-    walker = target.walk(top_down=True)
-    for root, dirnames, filenames in walker:
-        for filename in filenames:
-            path = root / filename
-            rel = path.relative_to(target).as_posix()
-            if not _should_process(
-                rel,
-                exclude_patterns=exclude_patterns,
-            ):
-                continue
-            files.append(path)
-
-    files.sort()
-    return files
+    files = [
+        path
+        for root, _dirnames, filenames in target.walk(top_down=True)
+        for filename in filenames
+        if _should_process(
+            (path := root / filename).relative_to(target).as_posix(),
+            exclude_patterns=exclude_patterns,
+        )
+    ]
+    return sorted(files)
 
 
 def _transpile_content(sql: str, *, read: str, write: str, pretty: bool) -> str:
-    statements = transpile(sql, read=read, write=write, pretty=pretty)
-    return ";\n".join(statements)
+    return ";\n".join(transpile(sql, read=read, write=write, pretty=pretty))
 
 
 def _print_diff(path: Path, before: str, after: str) -> None:
-    diff = unified_diff(
-        before.splitlines(keepends=True),
-        after.splitlines(keepends=True),
-        fromfile=f"a/{path}",
-        tofile=f"b/{path}",
-    )
-    output = "".join(diff)
-    if output:
+    if output := "".join(
+        unified_diff(
+            before.splitlines(keepends=True),
+            after.splitlines(keepends=True),
+            fromfile=f"a/{path}",
+            tofile=f"b/{path}",
+        )
+    ):
         typer.echo(output)
 
 
@@ -121,10 +111,7 @@ def cli(
     ] = False,
 ) -> None:
     exclude_patterns = tuple(exclude or ())
-    files = _candidate_files(
-        target,
-        exclude_patterns=exclude_patterns,
-    )
+    files = _candidate_files(target, exclude_patterns=exclude_patterns)
 
     stats = RunStats(scanned=len(files))
 
@@ -161,10 +148,7 @@ def cli(
         )
     )
 
-    if stats.failed > 0:
-        raise typer.Exit(code=1)
-
-    raise typer.Exit(code=0)
+    raise typer.Exit(code=int(stats.failed > 0))
 
 
 def main() -> None:
