@@ -121,28 +121,6 @@ def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     assert "info: summary scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
 
 
-def test_cli_diff_prints_patch(monkeypatch, tmp_path: Path) -> None:
-    target = tmp_path / "query.sql"
-    target.write_text("select 1\n", encoding="utf-8")
-
-    monkeypatch.setattr(
-        cli_module,
-        "transpile",
-        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
-    )
-
-    result = runner.invoke(
-        cli_module.app,
-        [str(target), "--read", "postgres", "--write", "snowflake", "--diff"],
-    )
-
-    assert result.exit_code == 0
-    assert "--- a/" in result.stdout
-    assert "+++ b/" in result.stdout
-    assert "-select 1" in result.stdout
-    assert "+SELECT 1" in result.stdout
-
-
 def test_cli_continues_on_errors_and_returns_one(monkeypatch, tmp_path: Path) -> None:
     first = tmp_path / "a.sql"
     second = tmp_path / "b.sql"

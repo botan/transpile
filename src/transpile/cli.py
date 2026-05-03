@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from difflib import unified_diff
 from fnmatch import fnmatch
 from pathlib import Path
 import sys
@@ -65,18 +64,6 @@ def _transpile_content(sql: str, *, read: str, write: str, pretty: bool) -> str:
     return ";\n".join(transpile(sql, read=read, write=write, pretty=pretty))
 
 
-def _print_diff(path: Path, before: str, after: str) -> None:
-    if output := "".join(
-        unified_diff(
-            before.splitlines(keepends=True),
-            after.splitlines(keepends=True),
-            fromfile=f"a/{path}",
-            tofile=f"b/{path}",
-        )
-    ):
-        typer.echo(output)
-
-
 def _acceptable_dialects() -> tuple[str, ...]:
     return tuple(sorted(available_dialects()))
 
@@ -117,10 +104,6 @@ def cli(
             help="Glob(s) to exclude. Repeat option for multiple patterns.",
         ),
     ] = None,
-    diff: Annotated[
-        bool,
-        typer.Option(help="Print unified diff for changed files."),
-    ] = False,
     dialects: Annotated[
         bool,
         typer.Option(
@@ -161,9 +144,6 @@ def cli(
 
         stats.changed += 1
         typer.echo(f"info: changed {path}")
-
-        if diff:
-            _print_diff(path, source, output)
 
         path.write_text(output, encoding="utf-8")
 

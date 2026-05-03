@@ -23,5 +23,4 @@ uv run transpile --dialects
 - `--read` / `--write` (required): source and target SQL dialects.
 - `--pretty` / `--no-pretty`: format transpiled SQL output.
 - `--exclude` (repeatable): exclude glob patterns.
-- `--diff`: print unified diffs for changed files.
 - `--dialects`: print all acceptable SQL dialect names and exit.
