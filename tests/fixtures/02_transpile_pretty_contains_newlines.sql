@@ -1,1 +1,0 @@
-SELECT IFNULL(a,b) FROM t
