@@ -6,6 +6,7 @@ from polyglot_sql import transpile
 
 app = typer.Typer()
 
+
 @app.command()
 def cli(
     input_path: Annotated[
@@ -19,13 +20,12 @@ def cli(
             resolve_path=True,
         ),
     ],
-    read: Annotated[str, typer.Option("--read", "-r", help="Source SQL dialect.")],
-    write: Annotated[str, typer.Option("--write", "-w", help="Target SQL dialect.")],
+    read: Annotated[str, typer.Option(help="Source SQL dialect")],
+    write: Annotated[str, typer.Option(help="Target SQL dialect")],
     pretty: Annotated[
         bool,
         typer.Option(
-            "--pretty/--no-pretty",
-            help="Pretty format transpiled SQL output.",
+            help="Pretty format transpiled SQL output",
         ),
     ] = False,
 ) -> None:
