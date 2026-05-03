@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from polyglot_sql import dialects as available_dialects
 from polyglot_sql import transpile
 
 app = typer.Typer(no_args_is_help=True)
@@ -76,7 +77,11 @@ def _print_diff(path: Path, before: str, after: str) -> None:
         typer.echo(output)
 
 
-@app.command()
+def _acceptable_dialects() -> tuple[str, ...]:
+    return tuple(sorted(available_dialects()))
+
+
+@app.command(name="run")
 def cli(
     target: Annotated[
         Path,
@@ -149,6 +154,11 @@ def cli(
     )
 
     raise typer.Exit(code=int(stats.failed > 0))
+
+
+@app.command()
+def dialects() -> None:
+    typer.echo("\n".join(_acceptable_dialects()))
 
 
 def main() -> None:
