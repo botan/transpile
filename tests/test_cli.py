@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -236,3 +237,25 @@ def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
 
     assert result.exit_code == 2
     assert "Invalid value for 'TARGET':" in result.output
+
+
+def test_cli_processes_engine_inline_sql_fixture_directory(
+    monkeypatch, tmp_path: Path
+) -> None:
+    fixture_source = Path(__file__).parent / "fixtures" / "engine_inline_sql"
+    fixture_target = tmp_path / "engine_inline_sql"
+    shutil.copytree(fixture_source, fixture_target)
+
+    monkeypatch.setattr(
+        cli_module,
+        "transpile",
+        lambda sql, read=None, write=None, *, pretty=False: [sql.upper()],
+    )
+
+    result = runner.invoke(
+        cli_module.app,
+        [str(fixture_target), "--read", "postgres", "--write", "snowflake"],
+    )
+
+    assert result.exit_code == 0
+    assert "Summary: scanned=4 changed=2 unchanged=2 failed=0" in result.stdout
