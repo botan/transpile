@@ -42,7 +42,7 @@ def test_cli_transpiles_single_file_in_place(monkeypatch, tmp_path: Path) -> Non
 
     assert result.exit_code == 0
     assert target.read_text(encoding="utf-8") == "SELECT 1"
-    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
+    assert "info: summary scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
 
 
 def test_cli_transpiles_directory_recursively(monkeypatch, tmp_path: Path) -> None:
@@ -80,7 +80,7 @@ def test_cli_transpiles_directory_recursively(monkeypatch, tmp_path: Path) -> No
     assert first.read_text(encoding="utf-8") == "SELECT 1"
     assert second.read_text(encoding="utf-8") == "SELECT 2"
     assert non_sql.read_text(encoding="utf-8") == "skip"
-    assert "Summary: scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
+    assert "info: summary scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
 
 
 def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
@@ -118,7 +118,7 @@ def test_cli_respects_exclude(monkeypatch, tmp_path: Path) -> None:
     assert keep.read_text(encoding="utf-8") == "SELECT 1"
     assert excluded.read_text(encoding="utf-8") == "select 2"
     assert included.read_text(encoding="utf-8") == "SELECT 3"
-    assert "Summary: scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
+    assert "info: summary scanned=2 changed=2 unchanged=0 failed=0" in result.stdout
 
 
 def test_cli_diff_prints_patch(monkeypatch, tmp_path: Path) -> None:
@@ -172,7 +172,7 @@ def test_cli_continues_on_errors_and_returns_one(monkeypatch, tmp_path: Path) ->
     assert result.exit_code == 1
     assert first.read_text(encoding="utf-8") == "OK"
     assert second.read_text(encoding="utf-8") == "boom"
-    assert "Summary: scanned=2 changed=1 unchanged=0 failed=1" in result.stdout
+    assert "info: summary scanned=2 changed=1 unchanged=0 failed=1" in result.stdout
 
 
 def test_cli_fails_for_missing_path(tmp_path: Path) -> None:
@@ -223,4 +223,4 @@ def test_cli_exclude_simple_name_matches_nested_paths(
     assert result.exit_code == 0
     assert keep.read_text(encoding="utf-8") == "SELECT 1"
     assert excluded_nested.read_text(encoding="utf-8") == "select 2"
-    assert "Summary: scanned=1 changed=1 unchanged=0 failed=0" in result.stdout
+    assert "info: summary scanned=1 changed=1 unchanged=0 failed=0" in result.stdout

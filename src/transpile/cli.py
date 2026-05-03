@@ -137,7 +137,7 @@ def cli(
     stats = RunStats(scanned=len(files))
 
     if not files:
-        typer.echo("No matching files found.")
+        typer.echo("info: no matching files found")
         raise typer.Exit(code=0)
 
     for path in files:
@@ -146,16 +146,16 @@ def cli(
             output = _transpile_content(source, read=read, write=write, pretty=pretty)
         except Exception as exc:
             stats.failed += 1
-            typer.echo(f"FAIL {path}: {exc}", err=True)
+            typer.echo(f"error: {path} - {exc}", err=True)
             continue
 
         if output == source:
             stats.unchanged += 1
-            typer.echo(f"UNCHANGED {path}")
+            typer.echo(f"info: unchanged {path}")
             continue
 
         stats.changed += 1
-        typer.echo(f"CHANGED {path}")
+        typer.echo(f"info: changed {path}")
 
         if diff:
             _print_diff(path, source, output)
@@ -164,7 +164,7 @@ def cli(
 
     typer.echo(
         (
-            f"Summary: scanned={stats.scanned} "
+            f"info: summary scanned={stats.scanned} "
             f"changed={stats.changed} unchanged={stats.unchanged} failed={stats.failed}"
         )
     )
