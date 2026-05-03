@@ -20,7 +20,6 @@ uv run transpile path/to/sql-or-dir --read postgres --write snowflake
 - `--read`: source SQL dialect (required)
 - `--write`: target SQL dialect (required)
 - `--pretty` / `--no-pretty`: format transpiled SQL output
-- `--include`: include glob(s), repeatable (default: `*.sql`)
 - `--exclude`: exclude glob(s), repeatable
 - `--diff`: print unified diffs for changed files
 

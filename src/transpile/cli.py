@@ -11,7 +11,7 @@ from polyglot_sql import transpile
 
 app = typer.Typer(no_args_is_help=True)
 
-DEFAULT_INCLUDE_PATTERNS = ("*.sql",)
+DEFAULT_SQL_PATTERNS = ("*.sql",)
 DEFAULT_SKIP_DIRS = frozenset({
     ".git",
     ".hg",
@@ -31,13 +31,6 @@ class RunStats:
     failed: int = 0
 
 
-def _normalize_patterns(patterns: list[str] | None) -> tuple[str, ...]:
-    if patterns is None:
-        return DEFAULT_INCLUDE_PATTERNS
-    cleaned = tuple(pattern.strip() for pattern in patterns if pattern.strip())
-    return cleaned or DEFAULT_INCLUDE_PATTERNS
-
-
 def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     basename = path.rsplit("/", 1)[-1]
     for pattern in patterns:
@@ -52,10 +45,9 @@ def _matches(path: str, patterns: tuple[str, ...]) -> bool:
 def _should_process(
     relative_path: str,
     *,
-    include_patterns: tuple[str, ...],
     exclude_patterns: tuple[str, ...],
 ) -> bool:
-    if not _matches(relative_path, include_patterns):
+    if not _matches(relative_path, DEFAULT_SQL_PATTERNS):
         return False
     if exclude_patterns and _matches(relative_path, exclude_patterns):
         return False
@@ -65,7 +57,6 @@ def _should_process(
 def _candidate_files(
     target: Path,
     *,
-    include_patterns: tuple[str, ...],
     exclude_patterns: tuple[str, ...],
 ) -> list[Path]:
     if target.is_file():
@@ -81,7 +72,6 @@ def _candidate_files(
             rel = path.relative_to(target).as_posix()
             if not _should_process(
                 rel,
-                include_patterns=include_patterns,
                 exclude_patterns=exclude_patterns,
             ):
                 continue
@@ -131,12 +121,6 @@ def cli(
         bool,
         typer.Option(help="Pretty format transpiled SQL output."),
     ] = False,
-    include: Annotated[
-        list[str] | None,
-        typer.Option(
-            help="Glob(s) to include. Repeat option for multiple patterns.",
-        ),
-    ] = None,
     exclude: Annotated[
         list[str] | None,
         typer.Option(
@@ -148,11 +132,9 @@ def cli(
         typer.Option(help="Print unified diff for changed files."),
     ] = False,
 ) -> None:
-    include_patterns = _normalize_patterns(include)
     exclude_patterns = tuple(exclude or ())
     files = _candidate_files(
         target,
-        include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
     )
 
