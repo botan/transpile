@@ -1,5 +1,5 @@
 [project]
-name = "polyglot-sql-cli"
+name = "transpile"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-polyglot = "polyglot_sql_cli.cli:main"
+transpile = "transpile.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.11.8,<0.12.0"]

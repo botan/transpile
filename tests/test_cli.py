@@ -5,7 +5,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-import polyglot_sql_cli.cli as cli_module
+import transpile.cli as cli_module
 
 runner = CliRunner()
 

@@ -1,11 +1,11 @@
-# polyglot-sql-cli
+# transpile
 
 Transpile SQL files in place, from a file path or an entire directory tree.
 
 ## Usage
 
 ```bash
-uv run polyglot path/to/sql-or-dir --read postgres --write snowflake
+uv run transpile path/to/sql-or-dir --read postgres --write snowflake
 ```
 
 ## Behavior
