@@ -11,17 +11,6 @@ from polyglot_sql import transpile
 
 app = typer.Typer(no_args_is_help=True)
 
-DEFAULT_SQL_PATTERNS = ("*.sql",)
-DEFAULT_SKIP_DIRS = frozenset({
-    ".git",
-    ".hg",
-    ".svn",
-    ".venv",
-    "venv",
-    "node_modules",
-    "__pycache__",
-})
-
 
 @dataclass(slots=True)
 class RunStats:
@@ -47,7 +36,7 @@ def _should_process(
     *,
     exclude_patterns: tuple[str, ...],
 ) -> bool:
-    if not _matches(relative_path, DEFAULT_SQL_PATTERNS):
+    if not _matches(relative_path, ("*.sql",)):
         return False
     if exclude_patterns and _matches(relative_path, exclude_patterns):
         return False
@@ -66,7 +55,6 @@ def _candidate_files(
 
     walker = target.walk(top_down=True)
     for root, dirnames, filenames in walker:
-        dirnames[:] = [dirname for dirname in dirnames if dirname not in DEFAULT_SKIP_DIRS]
         for filename in filenames:
             path = root / filename
             rel = path.relative_to(target).as_posix()
