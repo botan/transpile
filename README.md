@@ -17,8 +17,8 @@ uv run polyglot path/to/sql-or-dir --read postgres --write snowflake
 
 ## Options
 
-- `--read` / `-r`: source SQL dialect (required)
-- `--write` / `-w`: target SQL dialect (required)
+- `--read`: source SQL dialect (required)
+- `--write`: target SQL dialect (required)
 - `--pretty` / `--no-pretty`: format transpiled SQL output
 - `--recursive` / `--no-recursive`: recursive directory walk (default: recursive)
 - `--include`: include glob(s), repeatable (default: `*.sql`)

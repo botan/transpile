@@ -42,6 +42,19 @@ def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     return any(fnmatch(path, pattern) for pattern in patterns)
 
 
+def _should_process(
+    relative_path: str,
+    *,
+    include_patterns: tuple[str, ...],
+    exclude_patterns: tuple[str, ...],
+) -> bool:
+    if not _matches(relative_path, include_patterns):
+        return False
+    if exclude_patterns and _matches(relative_path, exclude_patterns):
+        return False
+    return True
+
+
 def _candidate_files(
     target: Path,
     *,
@@ -61,9 +74,11 @@ def _candidate_files(
             for filename in filenames:
                 path = root / filename
                 rel = path.relative_to(target).as_posix()
-                if not _matches(rel, include_patterns):
-                    continue
-                if exclude_patterns and _matches(rel, exclude_patterns):
+                if not _should_process(
+                    rel,
+                    include_patterns=include_patterns,
+                    exclude_patterns=exclude_patterns,
+                ):
                     continue
                 files.append(path)
     else:
@@ -71,9 +86,11 @@ def _candidate_files(
             if not path.is_file():
                 continue
             rel = path.relative_to(target).as_posix()
-            if not _matches(rel, include_patterns):
-                continue
-            if exclude_patterns and _matches(rel, exclude_patterns):
+            if not _should_process(
+                rel,
+                include_patterns=include_patterns,
+                exclude_patterns=exclude_patterns,
+            ):
                 continue
             files.append(path)
 
@@ -111,11 +128,11 @@ def cli(
     ],
     read: Annotated[
         str,
-        typer.Option("--read", "-r", help="Source SQL dialect."),
+        typer.Option(help="Source SQL dialect."),
     ],
     write: Annotated[
         str,
-        typer.Option("--write", "-w", help="Target SQL dialect."),
+        typer.Option(help="Target SQL dialect."),
     ],
     pretty: Annotated[
         bool,
@@ -123,32 +140,29 @@ def cli(
     ] = False,
     recursive: Annotated[
         bool,
-        typer.Option("--recursive/--no-recursive", help="Walk directories recursively."),
+        typer.Option(help="Walk directories recursively."),
     ] = True,
     include: Annotated[
         list[str] | None,
         typer.Option(
-            "--include",
             help="Glob(s) to include. Repeat option for multiple patterns.",
         ),
     ] = None,
     exclude: Annotated[
         list[str] | None,
         typer.Option(
-            "--exclude",
             help="Glob(s) to exclude. Repeat option for multiple patterns.",
         ),
     ] = None,
     check: Annotated[
         bool,
         typer.Option(
-            "--check",
             help="Do not write changes; fail if any file would change.",
         ),
     ] = False,
     diff: Annotated[
         bool,
-        typer.Option("--diff", help="Print unified diff for changed files."),
+        typer.Option(help="Print unified diff for changed files."),
     ] = False,
 ) -> None:
     include_patterns = _normalize_patterns(include)
